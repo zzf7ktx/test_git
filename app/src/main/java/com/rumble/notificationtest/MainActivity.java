@@ -292,7 +292,10 @@ public final class MainActivity extends Activity {
     private FirebaseMessaging firebaseMessaging() {
         try {
             if (FirebaseApp.getApps(this).isEmpty()) {
-                FirebaseApp.initializeApp(this);
+                FirebaseApp app = FirebaseApp.initializeApp(this);
+                if (app == null) {
+                    throw new IllegalStateException("Firebase config was not generated. Rebuild the APK with app/google-services.json present.");
+                }
             }
             return FirebaseMessaging.getInstance();
         } catch (Exception ex) {
