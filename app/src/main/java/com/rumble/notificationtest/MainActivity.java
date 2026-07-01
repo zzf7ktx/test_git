@@ -22,6 +22,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONObject;
@@ -207,7 +208,10 @@ public final class MainActivity extends Activity {
 
     private void getFcmToken() {
         setStatus("Requesting FCM token...");
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+        FirebaseMessaging messaging = firebaseMessaging();
+        if (messaging == null) return;
+
+        messaging.getToken().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 log("Get FCM token failed", task.getException() == null ? "Unknown error" : task.getException().toString());
                 setStatus("Could not get FCM token.");
@@ -268,7 +272,10 @@ public final class MainActivity extends Activity {
 
     private void deleteFirebaseToken() {
         setStatus("Deleting Firebase token...");
-        FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(task -> {
+        FirebaseMessaging messaging = firebaseMessaging();
+        if (messaging == null) return;
+
+        messaging.deleteToken().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 log("Delete Firebase token failed", task.getException() == null ? "Unknown error" : task.getException().toString());
                 setStatus("Could not delete Firebase token.");
@@ -280,6 +287,19 @@ public final class MainActivity extends Activity {
             log("Firebase token deleted", "Call Get FCM Token to request a new token.");
             setStatus("Firebase token deleted.");
         });
+    }
+
+    private FirebaseMessaging firebaseMessaging() {
+        try {
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                FirebaseApp.initializeApp(this);
+            }
+            return FirebaseMessaging.getInstance();
+        } catch (Exception ex) {
+            log("Firebase unavailable", ex.toString());
+            setStatus("Firebase is not configured.");
+            return null;
+        }
     }
 
     private void unreadCount() {
@@ -422,7 +442,14 @@ public final class MainActivity extends Activity {
         Button button = new Button(this);
         button.setText(text);
         button.setAllCaps(false);
-        button.setOnClickListener(listener);
+        button.setOnClickListener(v -> {
+            try {
+                listener.onClick(v);
+            } catch (Exception ex) {
+                log(text + " failed", ex.toString());
+                setStatus(text + " failed.");
+            }
+        });
         return button;
     }
 
