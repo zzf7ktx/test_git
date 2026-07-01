@@ -13,11 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-      ANDROID_HOME: ${{ github.workspace }}/android-sdk
-      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:${{ env.PATH }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,18 +33,29 @@ jobs:
           rm -rf $ANDROID_SDK_ROOT/cmdline-tools/latest
           mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
           ls -la $ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          ANDROID_HOME: ${{ github.workspace }}/android-sdk
 
       - name: Install Android SDK platforms and build tools
         run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --update
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-35" "build-tools;35.0.3"
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+        env:
+          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+          ANDROID_HOME: ${{ github.workspace }}/android-sdk
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x ./gradlew
 
       - name: Build APK
-        run: ./gradlew clean assembleDebug --no-daemon
+        run: |
+          export ANDROID_SDK_ROOT=${{ github.workspace }}/android-sdk
+          export ANDROID_HOME=${{ github.workspace }}/android-sdk
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+          ./gradlew clean assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
