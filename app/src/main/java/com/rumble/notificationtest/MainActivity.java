@@ -152,7 +152,8 @@ public final class MainActivity extends Activity {
             button("Unlike Then Like", v -> triggerLike()));
 
         addSection(root, "Output");
-        output = text("", 12, Typeface.MONOSPACE);
+        output = text("", 12, Typeface.NORMAL);
+        output.setTypeface(Typeface.MONOSPACE);
         output.setPadding(dp(10), dp(10), dp(10), dp(10));
         output.setBackgroundColor(0xff101820);
         output.setTextColor(0xffd8f3dc);
