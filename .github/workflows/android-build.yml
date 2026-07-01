@@ -23,39 +23,17 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install Android SDK command-line tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          curl -o /tmp/cmdline-tools.zip -L https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q /tmp/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-          rm -rf $ANDROID_SDK_ROOT/cmdline-tools/latest
-          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-          ls -la $ANDROID_SDK_ROOT/cmdline-tools/latest/bin
-        env:
-          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
-
-      - name: Install Android SDK platforms and build tools
-        run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --update
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --install "platform-tools" "platforms;android-35" "build-tools;35.0.3"
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-        env:
-          ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          api-level: 35
+          build-tools: 35.0.3
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x ./gradlew
 
       - name: Build APK
-        run: |
-          export ANDROID_SDK_ROOT=${{ github.workspace }}/android-sdk
-          export ANDROID_HOME=${{ github.workspace }}/android-sdk
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
-          ./gradlew clean assembleDebug --no-daemon
+        run: ./gradlew clean assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
